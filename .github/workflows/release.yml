@@ -72,6 +72,8 @@ jobs:
       - name: Install zig (Linux only if kind=zig)
         if: runner.os == 'Linux' && matrix.kind == 'zig'
         uses: mlugg/setup-zig@v1
+        with:
+          version: 0.12.1
 
       - name: Install cargo-zigbuild (Linux only if kind=zig)
         if: runner.os == 'Linux' && matrix.kind == 'zig'
@@ -109,9 +111,12 @@ jobs:
           if [ "${{ runner.os }}" = "Windows" ]; then
             7z a "${OUTDIR}/${PKG}.zip" "$BIN" LICENSE README.md 2>/dev/null || powershell -Command "Compress-Archive -Path $BIN, LICENSE, README.md -DestinationPath ${OUTDIR}/${PKG}.zip"
           else
-            tar -czf "${OUTDIR}/${PKG}.tar.gz" -C "$(dirname "$BIN")" "$(basename "$BIN")"
-            if [ -f LICENSE ]; then tar -rzf "${OUTDIR}/${PKG}.tar.gz" LICENSE; fi
-            if [ -f README.md ]; then tar -rzf "${OUTDIR}/${PKG}.tar.gz" README.md; fi
+            PKGDIR="$(mktemp -d)"
+            cp "$BIN" "$PKGDIR/"
+            if [ -f LICENSE ]; then cp LICENSE "$PKGDIR/"; fi
+            if [ -f README.md ]; then cp README.md "$PKGDIR/"; fi
+            tar -czf "${OUTDIR}/${PKG}.tar.gz" -C "$PKGDIR" .
+            rm -rf "$PKGDIR"
           fi
           echo "PKG_NAME=${PKG}" >> $GITHUB_ENV
 
