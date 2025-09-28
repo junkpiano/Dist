@@ -15,7 +15,7 @@ Single-binary CLI that cross-posts short text updates to Bluesky, Mastodon, and 
 ## Setup
 1. Install the Rust toolchain if you have not already: <https://rustup.rs>.
 2. Clone the repository and change into the project directory.
-3. Create a `.env` file (or export variables in your shell) with the credentials you want to use.
+3. Create a config file at `~/.config/dist/config.env` (or the platform-specific user config dir) with the credentials you want to use. During development (`cargo run`, `cargo test`, etc.) the binary also reads a local `.env` when present for convenience.
 
 ### Configuration
 The application looks for the following environment variables. Missing values simply cause that service to be skipped at runtime.
@@ -30,7 +30,7 @@ The application looks for the following environment variables. Missing values si
 | `NOSTR_NSEC` | Nostr | Your Nostr private key in `nsec` (or hex) format. |
 | `NOSTR_RELAYS` | Nostr (optional) | Comma-separated list of relay URLs; invalid entries are ignored. |
 
-Example `.env` snippet:
+Example snippet (`config.env` or `.env` during development):
 
 ```
 BSKY_HANDLE=alice.example

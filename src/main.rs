@@ -1,7 +1,8 @@
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 use anyhow::{Context, Result, anyhow};
 use clap::Parser;
+use directories::ProjectDirs;
 use dotenvy::dotenv;
 use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
 use serde::{Deserialize, Serialize};
@@ -52,14 +53,17 @@ struct Env {
 
 impl Env {
     fn load() -> Self {
-        // Load .env if present
-        let _ = dotenv();
+        let config = load_config_defaults();
+
+        #[cfg(debug_assertions)]
+        {
+            let _ = dotenv();
+        }
 
         let bsky_pds =
-            std::env::var("BSKY_PDS").unwrap_or_else(|_| "https://bsky.social".to_string());
+            lookup_env("BSKY_PDS", &config).unwrap_or_else(|| "https://bsky.social".to_string());
 
-        let nostr_relays = std::env::var("NOSTR_RELAYS")
-            .ok()
+        let nostr_relays = lookup_env("NOSTR_RELAYS", &config)
             .map(|s| {
                 s.split(',')
                     .map(|x| x.trim().to_string())
@@ -69,15 +73,34 @@ impl Env {
             .unwrap_or_else(|| Vec::<String>::new());
 
         Self {
-            bsky_handle: std::env::var("BSKY_HANDLE").ok(),
-            bsky_password: std::env::var("BSKY_PASSWORD").ok(),
+            bsky_handle: lookup_env("BSKY_HANDLE", &config),
+            bsky_password: lookup_env("BSKY_PASSWORD", &config),
             bsky_pds,
-            masto_base: std::env::var("MASTODON_BASE_URL").ok(),
-            masto_token: std::env::var("MASTODON_ACCESS_TOKEN").ok(),
-            nostr_nsec: std::env::var("NOSTR_NSEC").ok(),
+            masto_base: lookup_env("MASTODON_BASE_URL", &config),
+            masto_token: lookup_env("MASTODON_ACCESS_TOKEN", &config),
+            nostr_nsec: lookup_env("NOSTR_NSEC", &config),
             nostr_relays,
         }
     }
+}
+
+fn load_config_defaults() -> HashMap<String, String> {
+    let mut values = HashMap::new();
+
+    if let Some(dirs) = ProjectDirs::from("", "", "dist") {
+        let config_path = dirs.config_dir().join("config.env");
+        if let Ok(iter) = dotenvy::from_path_iter(&config_path) {
+            for item in iter.flatten() {
+                values.insert(item.0, item.1);
+            }
+        }
+    }
+
+    values
+}
+
+fn lookup_env(key: &str, config: &HashMap<String, String>) -> Option<String> {
+    std::env::var(key).ok().or_else(|| config.get(key).cloned())
 }
 
 #[derive(Serialize, Deserialize)]
