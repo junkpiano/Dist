@@ -411,23 +411,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "crosspost-rs"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "clap",
- "dotenvy",
- "futures",
- "nostr-sdk",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror 2.0.16",
- "tokio",
-]
-
-[[package]]
 name = "crypto-common"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -464,6 +447,23 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "dist"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "dotenvy",
+ "futures",
+ "nostr-sdk",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.16",
+ "tokio",
 ]
 
 [[package]]
