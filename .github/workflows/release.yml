@@ -109,7 +109,18 @@ jobs:
           TAG="${GITHUB_REF_NAME:-dev}"
           PKG="${APP_NAME}-${{ matrix.target }}-${TAG}"
           if [ "${{ runner.os }}" = "Windows" ]; then
-            7z a "${OUTDIR}/${PKG}.zip" "$BIN" LICENSE README.md 2>/dev/null || powershell -Command "Compress-Archive -Path $BIN, LICENSE, README.md -DestinationPath ${OUTDIR}/${PKG}.zip"
+            ARCHIVE="${OUTDIR}/${PKG}.zip"
+            FILES=("$BIN")
+            for extra in LICENSE README.md; do
+              if [ -f "$extra" ]; then
+                FILES+=("$extra")
+              fi
+            done
+            rm -f "$ARCHIVE"
+            if ! 7z a "$ARCHIVE" "${FILES[@]}" >/dev/null; then
+              PS_FILES=$(printf "'%s'," "${FILES[@]}")
+              powershell -Command "$files = @(${PS_FILES%,}); Compress-Archive -Path $files -DestinationPath '${ARCHIVE}' -Force"
+            fi
           else
             PKGDIR="$(mktemp -d)"
             cp "$BIN" "$PKGDIR/"
