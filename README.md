@@ -7,6 +7,7 @@ Single-binary CLI that cross-posts short text updates to Bluesky, Mastodon, and 
 - Reads credentials and server details from environment variables (supports a local `.env`).
 - Accepts text via CLI argument or `--stdin`, making it easy to script.
 - Optional `--no-*` flags let you skip individual services (handy for testing).
+- Bluesky posts automatically annotate URLs, fetch metadata, and upload thumbnails so the first link renders with a rich card preview.
 
 ## Requirements
 - Rust 1.82+ (the project uses the 2024 edition).
