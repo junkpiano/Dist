@@ -6,6 +6,9 @@ on:
       - 'v*'     # create a GitHub Release when pushing a tag
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: build (${{ matrix.target }})
