@@ -26,6 +26,10 @@ struct Args {
     no_masto: bool,
     #[arg(long)]
     no_nostr: bool,
+
+    /// Update Nostr profile image (URL)
+    #[arg(long, value_name = "URL")]
+    nostr_image: Option<String>,
 }
 
 #[derive(Debug)]
@@ -105,25 +109,22 @@ async fn main() -> Result<()> {
         let mut buf = String::new();
         let mut reader = stdin();
         reader.read_to_string(&mut buf).await?;
-        buf.trim().to_string()
+        buf
     } else {
-        args.text
-            .clone()
-            .unwrap_or_else(|| {
-                eprintln!("Usage: dist \"your text\" (or --stdin)");
-                std::process::exit(1);
-            })
-            .trim()
-            .to_string()
+        args.text.clone().unwrap_or_default()
     };
+    let text = text.trim().to_string();
+    let has_text = !text.is_empty();
 
-    if text.is_empty() {
-        eprintln!("Text is empty.");
+    if !has_text && args.nostr_image.is_none() {
+        eprintln!("Usage: dist \"your text\" (or --stdin) or --nostr-image <url>");
         std::process::exit(1);
     }
 
     let bsky_fut = async {
-        if !args.no_bsky {
+        if !has_text {
+            println!("[Bluesky] skipped (no text)");
+        } else if !args.no_bsky {
             match (env.bsky_handle.as_deref(), env.bsky_password.as_deref()) {
                 (Some(handle), Some(password)) => {
                     match bluesky::post_bluesky(&env.bsky_pds, handle, password, &text).await {
@@ -139,7 +140,9 @@ async fn main() -> Result<()> {
     };
 
     let masto_fut = async {
-        if !args.no_masto {
+        if !has_text {
+            println!("[Mastodon] skipped (no text)");
+        } else if !args.no_masto {
             match (env.masto_base.as_deref(), env.masto_token.as_deref()) {
                 (Some(base), Some(token)) => {
                     match mastodon::post_mastodon(base, token, &text).await {
@@ -155,19 +158,31 @@ async fn main() -> Result<()> {
     };
 
     let nostr_fut = async {
-        if !args.no_nostr {
-            match env.nostr_nsec.as_deref() {
-                Some(nsec) => {
-                    let relays = &env.nostr_relays;
+        if args.no_nostr {
+            println!("[Nostr] skipped (--no-nostr)");
+            return;
+        }
+
+        match env.nostr_nsec.as_deref() {
+            Some(nsec) => {
+                let relays = &env.nostr_relays;
+                if has_text {
                     match nostr::post_nostr(nsec, relays, &text).await {
                         Ok(id) => println!("[Nostr] OK: {id}"),
                         Err(e) => eprintln!("[Nostr] ERROR: {e:?}"),
                     }
+                } else {
+                    println!("[Nostr] skipped (no text)");
                 }
-                None => println!("[Nostr] skipped (missing env)"),
+
+                if let Some(image_url) = args.nostr_image.as_deref() {
+                    match nostr::update_nostr_profile_image(nsec, relays, image_url).await {
+                        Ok(id) => println!("[Nostr] Profile image OK: {id}"),
+                        Err(e) => eprintln!("[Nostr] Profile image ERROR: {e:?}"),
+                    }
+                }
             }
-        } else {
-            println!("[Nostr] skipped (--no-nostr)");
+            None => println!("[Nostr] skipped (missing env)"),
         }
     };
 

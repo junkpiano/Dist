@@ -7,6 +7,7 @@ Single-binary CLI that cross-posts short text updates to Bluesky, Mastodon, and 
 - Reads credentials and server details from environment variables (supports a local `.env`).
 - Accepts text via CLI argument or `--stdin`, making it easy to script.
 - Optional `--no-*` flags let you skip individual services (handy for testing).
+- Can update the Nostr profile image via `--nostr-image`.
 - Bluesky posts automatically annotate URLs, fetch metadata, and upload thumbnails so the first link renders with a rich card preview.
 
 ## Requirements
@@ -74,6 +75,12 @@ Skip individual services when you need to test credentials:
 
 ```
 cargo run -- "Testing" --no-bsky --no-nostr
+```
+
+Update the Nostr profile image (can be used on its own or alongside a post):
+
+```
+cargo run -- --nostr-image "https://example.com/avatar.png" --no-bsky --no-masto
 ```
 
 When a service call succeeds you will see its canonical URL or event ID in the output; errors are logged to stderr without stopping the other posts.
