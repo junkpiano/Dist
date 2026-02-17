@@ -1,6 +1,4 @@
-mod services;
-
-use crate::services::{bluesky, mastodon, nostr};
+use dist::services::{bluesky, mastodon, nostr};
 use anyhow::Result;
 use clap::Parser;
 use directories::ProjectDirs;
